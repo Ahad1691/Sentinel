@@ -4,44 +4,60 @@ const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 const MAX_SOURCE_CHARS = 50_000;
 const API_TIMEOUT_MS = 30_000;
 
-const AUDIT_PROMPT = `You are Sentinel, an expert smart contract security auditor. You will be
-given Solidity source code. Analyze it for vulnerabilities including
-reentrancy, integer overflow/underflow, unchecked external calls, access
-control issues, front-running risk, denial of service vectors, and logic
-errors.
+const AUDIT_PROMPT = `You are Sentinel, a senior smart-contract educator writing an educational
+security review of a public, already-verified Ethereum contract.
+This is defensive education only — help builders and investors understand
+common risk patterns. Do not provide exploit instructions or attack steps.
 
-For each issue, note if it resembles a well-known historical exploit (e.g.
-The DAO reentrancy hack of 2016, Parity multisig freeze, Cream Finance flash
-loan exploits) — only if it genuinely matches, don't force it.
+Analyze the Solidity below for concerns such as reentrancy patterns,
+access-control gaps, unchecked external calls, integer risks, denial-of-service
+patterns, and risky logic. For each finding, note a historical parallel only
+when it genuinely matches (e.g. The DAO 2016, Parity multisig freeze, Cream
+Finance flash loans); otherwise use null.
 
-Respond with ONLY valid JSON, no markdown, no code fences, no preamble.
-Use exactly this structure:
+Respond with ONLY valid JSON (no markdown, no code fences, no preamble) using
+exactly this structure:
 
 {
-  "overallRiskScore": <1-10, 10 = riskiest>,
-  "summary": "<one sentence, plain English, for a non-technical investor>",
+  "overallRiskScore": <integer 1-10, 10 = riskiest>,
+  "summary": "<one plain-English sentence for a non-technical investor>",
   "issues": [
     {
       "title": "<short name>",
       "severity": "<Critical|High|Medium|Low|Info>",
       "plainEnglishExplanation": "<2-3 sentences, zero jargon, use an analogy>",
-      "technicalDetail": "<1-2 sentences, technical>",
+      "technicalDetail": "<1-2 technical sentences describing the concern>",
       "historicalMatch": "<matching incident name, or null>",
       "historicalMatchSummary": "<one sentence on that incident, or null>"
     }
   ]
 }
 
-If no issues found, return an empty array and a low score with an
-encouraging summary.
+If the contract looks well-hardened, return a low score and an empty issues array
+with an encouraging summary.
 
-Here is the contract source code to analyze:
+Solidity source to review:
 `;
 
 type EtherscanSourceResult = {
   SourceCode?: string;
   ABI?: string;
   ContractName?: string;
+};
+
+type AuditIssue = {
+  title: string;
+  severity: string;
+  plainEnglishExplanation: string;
+  technicalDetail: string;
+  historicalMatch: string | null;
+  historicalMatchSummary: string | null;
+};
+
+type AuditReport = {
+  overallRiskScore: number;
+  summary: string;
+  issues: AuditIssue[];
 };
 
 function stripMarkdownFences(text: string): string {
@@ -100,6 +116,100 @@ function extractSourceCode(raw: string): string {
   return raw;
 }
 
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asNullableString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.toLowerCase() === "null") return null;
+    return trimmed;
+  }
+  return null;
+}
+
+function asScore(value: unknown): number | null {
+  const num = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(num)) return null;
+  return Math.max(1, Math.min(10, Math.round(num)));
+}
+
+function normalizeReport(raw: unknown): AuditReport | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const obj = raw as Record<string, unknown>;
+
+  // Model sometimes returns a refusal object instead of the schema
+  if (
+    typeof obj.error === "string" &&
+    !("overallRiskScore" in obj) &&
+    !("issues" in obj)
+  ) {
+    return null;
+  }
+
+  const score =
+    asScore(obj.overallRiskScore) ??
+    asScore(obj.overall_risk_score) ??
+    asScore(obj.riskScore);
+
+  const summary =
+    asString(obj.summary) ||
+    asString(obj.overview) ||
+    asString(obj.description);
+
+  if (score === null || !summary.trim()) {
+    return null;
+  }
+
+  const issuesRaw = Array.isArray(obj.issues)
+    ? obj.issues
+    : Array.isArray(obj.findings)
+      ? obj.findings
+      : [];
+
+  const issues: AuditIssue[] = issuesRaw
+    .map((item): AuditIssue | null => {
+      if (!item || typeof item !== "object") return null;
+      const issue = item as Record<string, unknown>;
+      const title = asString(issue.title) || asString(issue.name);
+      const severity = asString(issue.severity) || "Info";
+      const plainEnglishExplanation =
+        asString(issue.plainEnglishExplanation) ||
+        asString(issue.explanation) ||
+        asString(issue.description);
+      const technicalDetail =
+        asString(issue.technicalDetail) ||
+        asString(issue.technical) ||
+        asString(issue.details);
+
+      if (!title.trim() || !plainEnglishExplanation.trim()) return null;
+
+      return {
+        title: title.trim(),
+        severity: severity.trim() || "Info",
+        plainEnglishExplanation: plainEnglishExplanation.trim(),
+        technicalDetail:
+          technicalDetail.trim() || plainEnglishExplanation.trim(),
+        historicalMatch:
+          asNullableString(issue.historicalMatch) ??
+          asNullableString(issue.historical_match),
+        historicalMatchSummary:
+          asNullableString(issue.historicalMatchSummary) ??
+          asNullableString(issue.historical_match_summary),
+      };
+    })
+    .filter((item): item is AuditIssue => item !== null);
+
+  return {
+    overallRiskScore: score,
+    summary: summary.trim(),
+    issues,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const etherscanKey = process.env.ETHERSCAN_API_KEY;
@@ -120,7 +230,7 @@ export async function POST(request: NextRequest) {
       body = await request.json();
     } catch {
       return NextResponse.json(
-        { error: "Invalid JSON body. Send { \"address\": \"0x...\" }." },
+        { error: 'Invalid JSON body. Send { "address": "0x..." }.' },
         { status: 400 }
       );
     }
@@ -217,8 +327,7 @@ export async function POST(request: NextRequest) {
 
     const promptText = `${AUDIT_PROMPT}${truncationNote}\n${sourceForPrompt}`;
 
-    // --- Gemini: security analysis ---
-    // Prefer current free Flash model — gemini-2.5-flash rejects new API keys.
+    // Prefer current free Flash model — older flash IDs reject newer API keys.
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`;
 
     let geminiRes: Response;
@@ -290,8 +399,20 @@ export async function POST(request: NextRequest) {
     const geminiData = (await geminiRes.json()) as {
       candidates?: Array<{
         content?: { parts?: Array<{ text?: string }> };
+        finishReason?: string;
       }>;
+      promptFeedback?: { blockReason?: string };
     };
+
+    if (geminiData.promptFeedback?.blockReason) {
+      return NextResponse.json(
+        {
+          error:
+            "The AI safety filter blocked this analysis. Please try a different verified contract.",
+        },
+        { status: 502 }
+      );
+    }
 
     const rawText =
       geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
@@ -303,14 +424,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let report: unknown;
+    let parsed: unknown;
     try {
-      report = JSON.parse(stripMarkdownFences(rawText));
+      parsed = JSON.parse(stripMarkdownFences(rawText));
     } catch {
       return NextResponse.json(
         {
           error:
             "Could not parse the AI security report. Please try scanning again.",
+        },
+        { status: 502 }
+      );
+    }
+
+    const report = normalizeReport(parsed);
+    if (!report) {
+      return NextResponse.json(
+        {
+          error:
+            "The AI could not produce a structured security report for this contract. Please try again.",
         },
         { status: 502 }
       );
