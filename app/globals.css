@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --bg: #030008;
+  --bg: #05010c;
   --text: #f8f5ff;
-  --line: rgba(255, 255, 255, 0.12);
+  --line: rgba(255, 255, 255, 0.14);
+  --glow: rgba(192, 132, 252, 0.4);
 }
 
 * {
@@ -19,7 +20,7 @@ html {
 body {
   min-height: 100vh;
   color: var(--text);
-  background: #030008;
+  background: var(--bg);
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   overflow-x: hidden;
 }
@@ -65,10 +66,21 @@ body {
 @keyframes pulse-glow {
   0%,
   100% {
-    opacity: 0.45;
+    opacity: 0.4;
+    transform: scale(1);
   }
   50% {
     opacity: 0.9;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
   }
 }
 
@@ -78,39 +90,44 @@ body {
 
 .bg-scene {
   background:
-    radial-gradient(ellipse 60% 45% at 78% 18%, rgba(168, 85, 247, 0.28), transparent 55%),
-    radial-gradient(ellipse 45% 40% at 12% 78%, rgba(236, 72, 153, 0.18), transparent 50%),
-    radial-gradient(ellipse 40% 35% at 88% 82%, rgba(34, 211, 238, 0.1), transparent 45%),
-    radial-gradient(circle at 50% 40%, rgba(76, 29, 149, 0.22), transparent 55%),
-    #030008;
+    radial-gradient(ellipse 58% 48% at 74% 18%, rgba(168, 85, 247, 0.34), transparent 58%),
+    radial-gradient(ellipse 44% 40% at 12% 76%, rgba(236, 72, 153, 0.22), transparent 52%),
+    radial-gradient(ellipse 38% 34% at 90% 80%, rgba(34, 211, 238, 0.12), transparent 48%),
+    radial-gradient(circle at 48% 42%, rgba(76, 29, 149, 0.28), transparent 56%),
+    radial-gradient(circle at 50% 115%, rgba(88, 28, 135, 0.32), transparent 40%),
+    #05010c;
 }
 
 .glass {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.12),
     rgba(255, 255, 255, 0.03)
   );
   border: 1px solid var(--line);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
 }
 
 .glass-strong {
   background: linear-gradient(
     145deg,
     rgba(255, 255, 255, 0.14),
-    rgba(88, 28, 135, 0.2)
+    rgba(88, 28, 135, 0.22)
   );
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 22px 64px rgba(76, 29, 149, 0.28);
 }
 
 .btn-glow {
-  background: linear-gradient(135deg, #f0abfc 0%, #c084fc 45%, #818cf8 100%);
+  background: linear-gradient(135deg, #f5d0fe 0%, #c084fc 42%, #818cf8 100%);
+  background-size: 160% 160%;
   color: #1a0b2e;
-  box-shadow: 0 12px 40px rgba(192, 132, 252, 0.35);
+  box-shadow: 0 14px 42px var(--glow);
+  animation: shimmer 8s ease infinite alternate;
 }
 
 .btn-glow:hover:not(:disabled) {
@@ -145,8 +162,8 @@ body {
   letter-spacing: -0.06em;
   background: linear-gradient(
     180deg,
-    rgba(214, 188, 255, 0.22),
-    rgba(214, 188, 255, 0.03)
+    rgba(230, 210, 255, 0.28),
+    rgba(230, 210, 255, 0.04)
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -155,16 +172,80 @@ body {
   pointer-events: none;
 }
 
+.watermark-stroke {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(230, 210, 255, 0.2);
+  user-select: none;
+  pointer-events: none;
+}
+
+.btn-pill-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.35rem 0.35rem 1.2rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.04)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.btn-pill-pair:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.06)
+  );
+}
+
+.btn-pill-pair .orb {
+  display: inline-flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #f0abfc, #818cf8);
+  color: #1a0b2e;
+  box-shadow: 0 8px 24px rgba(192, 132, 252, 0.4);
+}
+
+.hero-art {
+  filter: drop-shadow(0 30px 80px rgba(168, 85, 247, 0.5));
+}
+
+.social-rail a {
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.social-rail a:hover {
+  color: white;
+  transform: translateY(-2px);
+}
+
 .animate-float {
-  animation: floaty 7s ease-in-out infinite;
+  animation: floaty 7.5s ease-in-out infinite;
 }
 
 .animate-fade-up {
-  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-up 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .scroll-ring {
-  animation: orbit 14s linear infinite;
+  animation: orbit 16s linear infinite;
 }
 
 .spinner {

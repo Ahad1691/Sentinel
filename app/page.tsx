@@ -224,15 +224,38 @@ export default function Home() {
   return (
     <div id="top" className="bg-scene relative min-h-screen text-white">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="glow-orb absolute -left-24 top-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-[110px]" />
-        <div className="glow-orb absolute right-0 top-0 h-[30rem] w-[30rem] rounded-full bg-violet-600/25 blur-[130px]" />
-        <div className="absolute bottom-40 left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-[100px]" />
+        <div className="glow-orb absolute -left-[8%] top-[8%] h-[22rem] w-[22rem] rounded-full bg-fuchsia-500/25 blur-[110px]" />
+        <div
+          className="glow-orb absolute -right-[6%] -top-[4%] h-[34rem] w-[34rem] rounded-full bg-violet-600/30 blur-[130px]"
+          style={{ animationDelay: "1.2s" }}
+        />
+        <div
+          className="absolute bottom-[18%] left-[28%] h-[18rem] w-[18rem] rounded-full bg-cyan-400/10 blur-[100px]"
+          style={{ animationDelay: "2.4s" }}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_35%,rgba(5,1,12,0.72)_100%)]" />
       </div>
 
-      <aside className="pointer-events-none fixed left-5 top-1/2 z-40 hidden -translate-y-1/2 flex-col gap-4 text-[10px] uppercase tracking-[0.35em] text-white/35 lg:flex">
+      <aside className="pointer-events-none fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-5 text-[10px] uppercase tracking-[0.4em] text-white/35 xl:flex">
+        <span className="rotate-180 [writing-mode:vertical-rl]">2026</span>
+        <span className="h-12 w-px bg-white/20" />
         <span className="rotate-180 [writing-mode:vertical-rl]">Ethereum</span>
-        <span className="h-10 w-px self-center bg-white/20" />
-        <span className="rotate-180 [writing-mode:vertical-rl]">Security</span>
+      </aside>
+
+      <aside className="social-rail fixed right-5 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-4 text-white/40 xl:flex">
+        <a href="#about" aria-label="About" className="text-xs tracking-[0.2em]">
+          ●
+        </a>
+        <a
+          href="#features"
+          aria-label="Features"
+          className="text-xs tracking-[0.2em]"
+        >
+          ◆
+        </a>
+        <a href="#scan" aria-label="Scan" className="text-xs tracking-[0.2em]">
+          ▲
+        </a>
       </aside>
 
       <div className="relative mx-auto w-full max-w-6xl px-4 pb-20 pt-5 sm:px-6 lg:px-8">
@@ -240,20 +263,24 @@ export default function Home() {
           <nav className="glass flex items-center justify-between gap-3 rounded-full px-3 py-2.5 sm:px-5">
             <a
               href="#top"
-              className="font-display flex items-center gap-2 pl-1 text-sm font-bold tracking-wide"
+              className="font-display flex items-center gap-2 pl-1 text-sm font-bold tracking-[0.18em]"
             >
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-xs text-black">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-xs text-black shadow-[0_0_24px_rgba(192,132,252,0.55)]">
                 S
               </span>
               <span className="hidden sm:inline">SENTINEL</span>
             </a>
 
             <div className="hidden items-center gap-6 md:flex">
-              {NAV.map((item) => (
+              {NAV.map((item, index) => (
                 <a
                   key={item.href}
                   href={item.href}
-                  className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/65 transition hover:text-white"
+                  className={`text-[11px] font-medium uppercase tracking-[0.22em] transition hover:text-white ${
+                    index === 0
+                      ? "text-white underline decoration-fuchsia-400/80 decoration-2 underline-offset-8"
+                      : "text-white/65"
+                  }`}
                 >
                   {item.label}
                 </a>
@@ -269,69 +296,94 @@ export default function Home() {
           </nav>
         </header>
 
-        <section className="relative mt-10 grid min-h-[78vh] items-center gap-8 lg:mt-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div
-            className="animate-fade-up relative z-10 space-y-7"
-            style={{ animationDelay: "80ms" }}
-          >
-            <p className="text-[11px] uppercase tracking-[0.35em] text-violet-200/70">
-              AI Smart Contract Security
-            </p>
-            <h1 className="font-display text-5xl font-extrabold leading-[0.92] tracking-tight sm:text-6xl lg:text-7xl">
-              WE ARE
-              <br />
-              <span className="bg-gradient-to-r from-fuchsia-300 via-violet-200 to-cyan-300 bg-clip-text text-transparent">
-                SENTINEL
-              </span>
-            </h1>
-            <p className="max-w-md text-sm leading-relaxed text-violet-100/70 sm:text-base">
-              Premium on-chain defense for modern teams. Paste a verified
-              Ethereum contract and get a cinematic, investor-ready risk brief —
-              powered by Google Gemini.
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <a
-                href="#scan"
-                className="btn-glow inline-flex items-center gap-2 rounded-full py-2 pl-6 pr-2 text-sm font-semibold transition"
-              >
-                <span>Scan Contract</span>
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white">
-                  →
-                </span>
-              </a>
-              <a
-                href="#about"
-                className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm text-white/80 transition"
-              >
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-400/30 text-[10px]">
-                  ▶
-                </span>
-                How it works
-              </a>
-            </div>
-            <p className="text-xs text-white/40">
-              Scans are not stored — your data stays private
+        {/* Opticore / ALI ERA cinematic hero */}
+        <section className="relative mt-6 min-h-[86vh] overflow-hidden lg:mt-2">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <p className="watermark select-none text-center text-[22vw] font-extrabold leading-none tracking-[-0.07em] sm:text-[10.5rem] lg:text-[13rem]">
+              SENTINEL
             </p>
           </div>
 
-          <div
-            className="animate-fade-up relative flex min-h-[360px] items-center justify-center lg:min-h-[520px]"
-            style={{ animationDelay: "160ms" }}
-          >
-            <div className="watermark absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[18vw] font-extrabold leading-none sm:text-[9rem] lg:text-[11rem]">
-              SENTINEL
+          <div className="relative z-10 grid min-h-[86vh] items-center gap-6 lg:grid-cols-[0.95fr_1.1fr_0.85fr]">
+            <div
+              className="animate-fade-up order-2 space-y-6 lg:order-1"
+              style={{ animationDelay: "80ms" }}
+            >
+              <p className="text-[11px] uppercase tracking-[0.4em] text-violet-200/70">
+                We are
+              </p>
+              <h1 className="font-display text-5xl font-extrabold leading-[0.9] tracking-tight sm:text-6xl">
+                <span className="bg-gradient-to-r from-fuchsia-200 via-violet-100 to-cyan-200 bg-clip-text text-transparent">
+                  SENTINEL
+                </span>
+              </h1>
+              <p className="max-w-sm text-sm leading-relaxed text-violet-100/70 sm:text-base">
+                Premium on-chain defense for modern teams. Paste a verified
+                Ethereum contract and get a cinematic, investor-ready risk brief —
+                powered by Google Gemini.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <a href="#scan" className="btn-pill-pair text-sm font-semibold">
+                  <span>Scan Contract</span>
+                  <span className="orb">→</span>
+                </a>
+                <a
+                  href="#about"
+                  className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm text-white/80 transition"
+                >
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-400/30 text-[10px]">
+                    ▶
+                  </span>
+                  How it works
+                </a>
+              </div>
+              <p className="text-xs text-white/40">
+                Scans are not stored — your data stays private
+              </p>
             </div>
-            <div className="animate-float relative z-10 w-[88%] max-w-md drop-shadow-[0_30px_80px_rgba(168,85,247,0.45)]">
-              <Image
-                src="/hero.webp"
-                alt="Iridescent Sentinel form"
-                width={800}
-                height={800}
-                priority
-                className="h-auto w-full select-none"
-              />
+
+            <div
+              className="animate-fade-up order-1 flex min-h-[320px] items-center justify-center lg:order-2 lg:min-h-[560px]"
+              style={{ animationDelay: "140ms" }}
+            >
+              <div className="animate-float hero-art relative z-10 w-[92%] max-w-lg">
+                <Image
+                  src="/hero.webp"
+                  alt="Iridescent Sentinel form"
+                  width={900}
+                  height={900}
+                  priority
+                  className="h-auto w-full select-none"
+                />
+              </div>
             </div>
-            <div className="absolute bottom-2 right-2 hidden h-24 w-24 items-center justify-center sm:flex lg:bottom-8 lg:right-0">
+
+            <div
+              className="animate-fade-up order-3 hidden flex-col items-end justify-end gap-8 pb-10 lg:flex"
+              style={{ animationDelay: "200ms" }}
+            >
+              <div className="max-w-[12rem] text-right">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-violet-200/60">
+                  About us
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-white/55">
+                  We translate dense Solidity into clear security decisions.
+                </p>
+              </div>
+              <a
+                href="#features"
+                className="btn-ghost inline-flex items-center gap-3 rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/75"
+              >
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-400/30 text-sm">
+                  ▶
+                </span>
+                Watch tutorial
+              </a>
+            </div>
+          </div>
+
+          <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center justify-center">
+            <div className="relative flex h-24 w-24 items-center justify-center">
               <svg
                 viewBox="0 0 100 100"
                 className="scroll-ring absolute inset-0 h-full w-full"
@@ -342,7 +394,7 @@ export default function Home() {
                     d="M 50, 50 m -36, 0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0"
                   />
                 </defs>
-                <text className="fill-white/50 text-[9px] uppercase tracking-[0.28em]">
+                <text className="fill-white/45 text-[9px] uppercase tracking-[0.28em]">
                   <textPath href="#circlePath">
                     Scroll to explore · Sentinel ·{" "}
                   </textPath>
@@ -464,16 +516,16 @@ export default function Home() {
           className="relative mt-20 grid scroll-mt-28 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
         >
           <div className="relative hidden min-h-[320px] lg:block">
-            <div className="watermark absolute -left-4 top-6 text-[7rem] font-extrabold leading-none">
+            <div className="watermark-stroke absolute -left-2 top-0 text-[7.5rem] font-extrabold leading-none lg:text-[9rem]">
               ABOUT
             </div>
-            <div className="animate-float absolute bottom-0 left-0 w-[78%]">
+            <div className="animate-float absolute bottom-0 left-0 w-[82%]">
               <Image
                 src="/about.webp"
                 alt=""
                 width={600}
                 height={600}
-                className="h-auto w-full opacity-90"
+                className="h-auto w-full opacity-95 drop-shadow-[0_30px_70px_rgba(168,85,247,0.4)]"
               />
             </div>
           </div>
