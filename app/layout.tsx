@@ -1,23 +1,24 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Outfit, Syne } from "next/font/google";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
 });
 
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const syne = Syne({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Sentinel - AI Smart Contract Security Scanner",
+  title: "Sentinel — AI Smart Contract Security",
   description:
-    "Paste an Ethereum contract address and get an AI-powered security report in plain English. Powered by Google Gemini.",
+    "Premium AI-powered smart contract security scanner. Paste an Ethereum address and get a plain-English risk report powered by Google Gemini.",
 };
 
 export default function RootLayout({
@@ -27,9 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${outfit.variable} ${syne.variable} antialiased`}>
         {children}
       </body>
     </html>

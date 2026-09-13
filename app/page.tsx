@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 
 type Severity = "Critical" | "High" | "Medium" | "Low" | "Info";
@@ -26,7 +27,7 @@ type ScanSuccess = {
   report: Report;
 };
 
-const EXAMPLE_CONTRACTS = [
+const EXAMPLES = [
   {
     label: "Try USDC",
     address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
@@ -41,46 +42,78 @@ const EXAMPLE_CONTRACTS = [
   },
 ] as const;
 
-const LOADING_MESSAGES = [
-  "Fetching contract source...",
-  "Analyzing with AI...",
+const LOADING = [
+  "Fetching verified source...",
+  "Running AI security analysis...",
+  "Mapping findings to plain English...",
 ] as const;
 
-function riskTone(score: number): { badge: string; label: string } {
+const NAV = [
+  { label: "Home", href: "#top" },
+  { label: "Scan", href: "#scan" },
+  { label: "About", href: "#about" },
+  { label: "Features", href: "#features" },
+  { label: "Report", href: "#report" },
+] as const;
+
+const FEATURES = [
+  {
+    step: "01",
+    title: "Fetch",
+    copy: "Pull verified Solidity from Etherscan the moment you paste an address.",
+  },
+  {
+    step: "02",
+    title: "Analyze",
+    copy: "Gemini Flash hunts reentrancy, access-control flaws, and risky call patterns.",
+  },
+  {
+    step: "03",
+    title: "Translate",
+    copy: "Every finding becomes investor-ready language — with optional historical parallels.",
+  },
+  {
+    step: "04",
+    title: "Decide",
+    copy: "Leave with a risk score, summary, and shareable report in seconds.",
+  },
+] as const;
+
+function riskTone(score: number) {
   if (score <= 3) {
     return {
-      badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/40",
+      badge: "border-emerald-300/30 bg-emerald-400/15 text-emerald-300",
       label: "Low risk",
     };
   }
   if (score <= 6) {
     return {
-      badge: "bg-amber-500/15 text-amber-300 border-amber-500/40",
+      badge: "border-amber-300/30 bg-amber-400/15 text-amber-200",
       label: "Moderate risk",
     };
   }
   return {
-    badge: "bg-red-500/15 text-red-400 border-red-500/40",
+    badge: "border-rose-300/30 bg-rose-400/15 text-rose-300",
     label: "High risk",
   };
 }
 
-function severityTone(severity: string): string {
+function severityTone(severity: string) {
   switch (severity) {
     case "Critical":
-      return "bg-red-500/20 text-red-300 border-red-500/40";
+      return "border-rose-400/35 bg-rose-500/20 text-rose-200";
     case "High":
-      return "bg-orange-500/20 text-orange-300 border-orange-500/40";
+      return "border-orange-400/35 bg-orange-500/20 text-orange-200";
     case "Medium":
-      return "bg-yellow-500/20 text-yellow-200 border-yellow-500/40";
+      return "border-amber-400/35 bg-amber-500/20 text-amber-100";
     case "Low":
-      return "bg-sky-500/20 text-sky-300 border-sky-500/40";
+      return "border-cyan-400/35 bg-cyan-500/20 text-cyan-200";
     default:
-      return "bg-slate-500/20 text-slate-300 border-slate-500/40";
+      return "border-white/15 bg-white/10 text-violet-100";
   }
 }
 
-function formatReportAsText(data: ScanSuccess): string {
+function reportText(data: ScanSuccess) {
   const { report, address, contractName } = data;
   const lines = [
     "Sentinel Security Report",
@@ -118,7 +151,7 @@ export default function Home() {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(false);
-  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+  const [msgIndex, setMsgIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScanSuccess | null>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
@@ -126,17 +159,17 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading) {
-      setLoadingMsgIndex(0);
+      setMsgIndex(0);
       return;
     }
     const id = window.setInterval(() => {
-      setLoadingMsgIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+      setMsgIndex((prev) => (prev + 1) % LOADING.length);
     }, 2000);
     return () => window.clearInterval(id);
   }, [loading]);
 
-  async function runScan(targetAddress: string) {
-    const trimmed = targetAddress.trim();
+  async function runScan(value: string) {
+    const trimmed = value.trim();
     if (!trimmed || loading || cooldown) return;
 
     setLoading(true);
@@ -145,7 +178,6 @@ export default function Home() {
     setResult(null);
     setExpanded({});
     setCopied(false);
-
     window.setTimeout(() => setCooldown(false), 3000);
 
     try {
@@ -154,15 +186,15 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address: trimmed }),
       });
-
       const data = (await res.json()) as ScanSuccess & { error?: string };
-
       if (!res.ok || data.error) {
         setError(data.error || "Scan failed. Please try again.");
         return;
       }
-
       setResult(data);
+      window.setTimeout(() => {
+        document.getElementById("report")?.scrollIntoView({ behavior: "smooth" });
+      }, 80);
     } catch {
       setError("Network error. Check your connection and try again.");
     } finally {
@@ -170,15 +202,15 @@ export default function Home() {
     }
   }
 
-  function handleSubmit(event: FormEvent) {
+  function onSubmit(event: FormEvent) {
     event.preventDefault();
     void runScan(address);
   }
 
-  async function handleCopy() {
+  async function onCopy() {
     if (!result) return;
     try {
-      await navigator.clipboard.writeText(formatReportAsText(result));
+      await navigator.clipboard.writeText(reportText(result));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -186,119 +218,324 @@ export default function Home() {
     }
   }
 
-  const scanDisabled = loading || cooldown || !address.trim();
-  const scoreTone = result ? riskTone(result.report.overallRiskScore) : null;
+  const disabled = loading || cooldown || !address.trim();
+  const tone = result ? riskTone(result.report.overallRiskScore) : null;
 
   return (
-    <main className="min-h-screen bg-[#050a14] px-4 py-10 text-white sm:px-6 sm:py-14">
-      <div className="mx-auto flex w-full max-w-[800px] flex-col gap-8">
-        <header className="space-y-3 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            🛡️ Sentinel
-          </h1>
-          <p className="text-base text-slate-300 sm:text-lg">
-            AI-Powered Smart Contract Security Scanner
-          </p>
-          <p className="text-xs text-slate-500 sm:text-sm">
-            Scans are not stored — your data stays private
-          </p>
+    <div id="top" className="bg-scene relative min-h-screen text-white">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="glow-orb absolute -left-24 top-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-[110px]" />
+        <div className="glow-orb absolute right-0 top-0 h-[30rem] w-[30rem] rounded-full bg-violet-600/25 blur-[130px]" />
+        <div className="absolute bottom-40 left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-[100px]" />
+      </div>
+
+      <aside className="pointer-events-none fixed left-5 top-1/2 z-40 hidden -translate-y-1/2 flex-col gap-4 text-[10px] uppercase tracking-[0.35em] text-white/35 lg:flex">
+        <span className="rotate-180 [writing-mode:vertical-rl]">Ethereum</span>
+        <span className="h-10 w-px self-center bg-white/20" />
+        <span className="rotate-180 [writing-mode:vertical-rl]">Security</span>
+      </aside>
+
+      <div className="relative mx-auto w-full max-w-6xl px-4 pb-20 pt-5 sm:px-6 lg:px-8">
+        <header className="animate-fade-up sticky top-4 z-50">
+          <nav className="glass flex items-center justify-between gap-3 rounded-full px-3 py-2.5 sm:px-5">
+            <a
+              href="#top"
+              className="font-display flex items-center gap-2 pl-1 text-sm font-bold tracking-wide"
+            >
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-xs text-black">
+                S
+              </span>
+              <span className="hidden sm:inline">SENTINEL</span>
+            </a>
+
+            <div className="hidden items-center gap-6 md:flex">
+              {NAV.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/65 transition hover:text-white"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+
+            <a
+              href="#scan"
+              className="btn-glow rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wide transition sm:px-5 sm:text-[13px]"
+            >
+              Start Scan
+            </a>
+          </nav>
         </header>
 
-        <section className="rounded-2xl border border-slate-800 bg-[#0b1220] p-5 sm:p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <label htmlFor="address" className="sr-only">
-              Ethereum contract address
-            </label>
-            <input
-              id="address"
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Paste an Ethereum contract address (0x...)"
-              spellCheck={false}
-              className="w-full rounded-xl border border-slate-700 bg-[#050a14] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 sm:text-base"
-            />
-            <button
-              type="submit"
-              disabled={scanDisabled}
-              className="w-full rounded-xl bg-blue-500 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
-            >
-              {loading
-                ? "Scanning..."
-                : cooldown
-                  ? "Please wait..."
-                  : "Scan Contract"}
-            </button>
-          </form>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {EXAMPLE_CONTRACTS.map((example) => (
-              <button
-                key={example.address}
-                type="button"
-                onClick={() => setAddress(example.address)}
-                className="rounded-lg border border-slate-700 bg-[#050a14] px-3 py-1.5 text-xs text-slate-300 transition hover:border-blue-500 hover:text-white sm:text-sm"
+        <section className="relative mt-10 grid min-h-[78vh] items-center gap-8 lg:mt-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div
+            className="animate-fade-up relative z-10 space-y-7"
+            style={{ animationDelay: "80ms" }}
+          >
+            <p className="text-[11px] uppercase tracking-[0.35em] text-violet-200/70">
+              AI Smart Contract Security
+            </p>
+            <h1 className="font-display text-5xl font-extrabold leading-[0.92] tracking-tight sm:text-6xl lg:text-7xl">
+              WE ARE
+              <br />
+              <span className="bg-gradient-to-r from-fuchsia-300 via-violet-200 to-cyan-300 bg-clip-text text-transparent">
+                SENTINEL
+              </span>
+            </h1>
+            <p className="max-w-md text-sm leading-relaxed text-violet-100/70 sm:text-base">
+              Premium on-chain defense for modern teams. Paste a verified
+              Ethereum contract and get a cinematic, investor-ready risk brief —
+              powered by Google Gemini.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href="#scan"
+                className="btn-glow inline-flex items-center gap-2 rounded-full py-2 pl-6 pr-2 text-sm font-semibold transition"
               >
-                {example.label}
-              </button>
+                <span>Scan Contract</span>
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white">
+                  →
+                </span>
+              </a>
+              <a
+                href="#about"
+                className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm text-white/80 transition"
+              >
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-400/30 text-[10px]">
+                  ▶
+                </span>
+                How it works
+              </a>
+            </div>
+            <p className="text-xs text-white/40">
+              Scans are not stored — your data stays private
+            </p>
+          </div>
+
+          <div
+            className="animate-fade-up relative flex min-h-[360px] items-center justify-center lg:min-h-[520px]"
+            style={{ animationDelay: "160ms" }}
+          >
+            <div className="watermark absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[18vw] font-extrabold leading-none sm:text-[9rem] lg:text-[11rem]">
+              SENTINEL
+            </div>
+            <div className="animate-float relative z-10 w-[88%] max-w-md drop-shadow-[0_30px_80px_rgba(168,85,247,0.45)]">
+              <Image
+                src="/hero.png"
+                alt="Iridescent Sentinel form"
+                width={800}
+                height={800}
+                priority
+                className="h-auto w-full select-none"
+              />
+            </div>
+            <div className="absolute bottom-2 right-2 hidden h-24 w-24 items-center justify-center sm:flex lg:bottom-8 lg:right-0">
+              <svg
+                viewBox="0 0 100 100"
+                className="scroll-ring absolute inset-0 h-full w-full"
+              >
+                <defs>
+                  <path
+                    id="circlePath"
+                    d="M 50, 50 m -36, 0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0"
+                  />
+                </defs>
+                <text className="fill-white/50 text-[9px] uppercase tracking-[0.28em]">
+                  <textPath href="#circlePath">
+                    Scroll to explore · Sentinel ·{" "}
+                  </textPath>
+                </text>
+              </svg>
+              <span className="text-lg text-white/70">↓</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="scan" className="relative z-10 mt-8 scroll-mt-28 sm:mt-12">
+          <div className="glass-strong animate-fade-up rounded-[2rem] p-5 sm:p-8">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-violet-200/60">
+                  Live Scanner
+                </p>
+                <h2 className="font-display mt-2 text-2xl font-bold sm:text-3xl">
+                  Paste an address. Get clarity.
+                </h2>
+              </div>
+              <p className="max-w-sm text-sm text-white/45">
+                Works with verified Ethereum mainnet contracts via Etherscan.
+              </p>
+            </div>
+
+            <form onSubmit={onSubmit} className="space-y-4">
+              <label htmlFor="address" className="sr-only">
+                Ethereum contract address
+              </label>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <input
+                  id="address"
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Paste an Ethereum contract address (0x...)"
+                  spellCheck={false}
+                  className="input-glow w-full rounded-full border border-white/15 bg-black/35 px-5 py-4 text-sm text-white outline-none transition placeholder:text-white/35 sm:text-base"
+                />
+                <button
+                  type="submit"
+                  disabled={disabled}
+                  className="btn-glow shrink-0 rounded-full px-8 py-4 text-sm font-semibold transition sm:min-w-[160px]"
+                >
+                  {loading
+                    ? "Scanning..."
+                    : cooldown
+                      ? "Please wait..."
+                      : "Scan Contract"}
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {EXAMPLES.map((ex) => (
+                <button
+                  key={ex.address}
+                  type="button"
+                  onClick={() => setAddress(ex.address)}
+                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/70 transition hover:border-fuchsia-300/40 hover:bg-white/10 hover:text-white sm:text-sm"
+                >
+                  {ex.label}
+                </button>
+              ))}
+            </div>
+
+            {loading && (
+              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 px-4 py-4 text-violet-100/80">
+                <div className="spinner" aria-hidden />
+                <p className="text-sm sm:text-base">{LOADING[msgIndex]}</p>
+              </div>
+            )}
+
+            {error && !loading && (
+              <div className="mt-6 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-4 sm:px-5">
+                <p className="text-sm text-rose-100 sm:text-base">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => void runScan(address)}
+                  disabled={!address.trim() || cooldown}
+                  className="mt-3 text-sm font-medium text-rose-50 underline underline-offset-2 hover:text-white disabled:opacity-50"
+                >
+                  Retry scan
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section id="features" className="mt-20 scroll-mt-28">
+          <div className="mb-8 max-w-xl">
+            <p className="text-[11px] uppercase tracking-[0.35em] text-violet-200/60">
+              Features
+            </p>
+            <h2 className="font-display mt-3 text-3xl font-bold sm:text-4xl">
+              Built for speed, clarity, and confidence.
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map((feature, index) => (
+              <div
+                key={feature.step}
+                className="glass animate-fade-up rounded-3xl p-5"
+                style={{ animationDelay: `${index * 70}ms` }}
+              >
+                <p className="text-[11px] text-fuchsia-300/80">{feature.step}</p>
+                <h3 className="mt-2 text-lg font-semibold">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/50">
+                  {feature.copy}
+                </p>
+              </div>
             ))}
           </div>
         </section>
 
-        {loading && (
-          <div className="animate-fade-in flex items-center justify-center gap-3 rounded-xl border border-slate-800 bg-[#0b1220] px-4 py-6 text-slate-300">
-            <div className="spinner" aria-hidden />
-            <p className="text-sm sm:text-base">
-              {LOADING_MESSAGES[loadingMsgIndex]}
+        <section
+          id="about"
+          className="relative mt-20 grid scroll-mt-28 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
+        >
+          <div className="relative hidden min-h-[320px] lg:block">
+            <div className="watermark absolute -left-4 top-6 text-[7rem] font-extrabold leading-none">
+              ABOUT
+            </div>
+            <div className="animate-float absolute bottom-0 left-0 w-[78%]">
+              <Image
+                src="/about.png"
+                alt=""
+                width={600}
+                height={600}
+                className="h-auto w-full opacity-90"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <p className="text-[11px] uppercase tracking-[0.35em] text-violet-200/60">
+              Who we are
             </p>
+            <h2 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
+              Security intelligence with a cinematic edge.
+            </h2>
+            <p className="max-w-xl text-sm leading-relaxed text-white/55 sm:text-base">
+              Sentinel is a frontend-first security studio experience: bold
+              visuals, glass surfaces, and a scanner that turns dense Solidity
+              into decisions you can actually explain. Ideal for founders,
+              investors, and hackathon teams who need signal — fast.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ["Stateless", "Nothing is stored after your scan"],
+                ["Gemini Flash", "Fast free-tier AI analysis"],
+                ["ETH Ready", "Mainnet verified contracts"],
+              ].map(([title, copy]) => (
+                <div key={title} className="glass rounded-2xl p-4">
+                  <p className="font-semibold">{title}</p>
+                  <p className="mt-1 text-xs text-white/45">{copy}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+        </section>
 
-        {error && !loading && (
-          <div className="animate-fade-in rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-4 sm:px-5">
-            <p className="text-sm text-red-200 sm:text-base">{error}</p>
-            <button
-              type="button"
-              onClick={() => void runScan(address)}
-              disabled={!address.trim() || cooldown}
-              className="mt-3 text-sm font-medium text-red-100 underline underline-offset-2 hover:text-white disabled:opacity-50"
-            >
-              Retry scan
-            </button>
-          </div>
-        )}
-
-        {result && !loading && scoreTone && (
-          <section className="animate-fade-in space-y-5">
-            <div className="space-y-5 rounded-2xl border border-slate-800 bg-[#0b1220] p-5 sm:p-6">
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        {result && !loading && tone && (
+          <section id="report" className="mt-16 scroll-mt-28 space-y-5">
+            <div className="glass-strong animate-fade-up rounded-[2rem] p-5 sm:p-8">
+              <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
                 <div
-                  className={`inline-flex items-center gap-3 rounded-2xl border px-4 py-3 ${scoreTone.badge}`}
+                  className={`inline-flex items-center gap-4 rounded-3xl border px-5 py-4 ${tone.badge}`}
                 >
-                  <span className="text-4xl font-bold tabular-nums sm:text-5xl">
+                  <span className="font-display text-5xl font-extrabold tabular-nums sm:text-6xl">
                     {result.report.overallRiskScore}
                   </span>
-                  <div className="text-left">
+                  <div>
                     <p className="text-sm font-semibold">/ 10</p>
-                    <p className="text-xs opacity-80">{scoreTone.label}</p>
+                    <p className="text-xs opacity-80">{tone.label}</p>
                   </div>
                 </div>
-
                 <button
                   type="button"
-                  onClick={() => void handleCopy()}
-                  className="rounded-xl border border-slate-700 bg-[#050a14] px-4 py-2.5 text-sm text-slate-200 transition hover:border-blue-500 hover:text-white"
+                  onClick={() => void onCopy()}
+                  className="btn-ghost rounded-full px-5 py-3 text-sm text-white/85 transition"
                 >
                   {copied ? "Copied!" : "Copy Report"}
                 </button>
               </div>
 
-              <p className="text-lg leading-relaxed text-slate-100 sm:text-xl">
+              <p className="mt-6 text-lg leading-relaxed text-violet-50 sm:text-xl">
                 {result.report.summary}
               </p>
 
               {result.contractName && (
-                <p className="text-xs text-slate-500">
+                <p className="mt-3 text-xs text-white/40">
                   Contract: {result.contractName}
                   {result.truncated ? " · Source truncated for analysis" : ""}
                 </p>
@@ -306,14 +543,14 @@ export default function Home() {
             </div>
 
             {result.report.issues.length === 0 ? (
-              <div className="space-y-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-6">
+              <div className="animate-fade-up rounded-[1.75rem] border border-emerald-400/25 bg-emerald-500/10 px-5 py-6">
                 <p className="text-lg font-semibold text-emerald-300">
                   No issues found in this scan
                 </p>
-                <p className="text-sm leading-relaxed text-emerald-100/80">
-                  Looking good from an automated pass — but AI analysis isn&apos;t
-                  a substitute for a professional security audit before you put
-                  real funds at risk.
+                <p className="mt-2 text-sm leading-relaxed text-emerald-50/80">
+                  Looking good from an automated pass — AI analysis still isn&apos;t
+                  a substitute for a professional audit before real funds are at
+                  risk.
                 </p>
               </div>
             ) : (
@@ -323,11 +560,12 @@ export default function Home() {
                   return (
                     <li
                       key={`${issue.title}-${index}`}
-                      className="space-y-3 rounded-2xl border border-slate-800 bg-[#0b1220] p-4 sm:p-5"
+                      className="glass animate-fade-up rounded-[1.5rem] p-4 sm:p-5"
+                      style={{ animationDelay: `${index * 60}ms` }}
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`rounded-md border px-2 py-0.5 text-xs font-semibold ${severityTone(issue.severity)}`}
+                          className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${severityTone(issue.severity)}`}
                         >
                           {issue.severity}
                         </span>
@@ -335,11 +573,9 @@ export default function Home() {
                           {issue.title}
                         </h3>
                       </div>
-
-                      <p className="text-sm leading-relaxed text-slate-300 sm:text-base">
+                      <p className="mt-3 text-sm leading-relaxed text-white/65 sm:text-base">
                         {issue.plainEnglishExplanation}
                       </p>
-
                       <button
                         type="button"
                         onClick={() =>
@@ -348,19 +584,17 @@ export default function Home() {
                             [index]: !prev[index],
                           }))
                         }
-                        className="text-sm text-blue-400 underline-offset-2 hover:underline"
+                        className="mt-3 text-sm text-fuchsia-300 underline-offset-2 hover:underline"
                       >
                         {open ? "Hide Technical Details" : "Technical Details"}
                       </button>
-
                       {open && (
-                        <p className="rounded-xl border border-slate-700 bg-[#050a14] px-3 py-3 font-mono text-sm leading-relaxed text-slate-400">
+                        <p className="mt-3 rounded-2xl border border-white/10 bg-black/30 px-3 py-3 font-mono text-sm leading-relaxed text-white/50">
                           {issue.technicalDetail}
                         </p>
                       )}
-
                       {issue.historicalMatch && (
-                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-sm text-amber-100">
+                        <div className="mt-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-3 py-3 text-sm text-amber-50">
                           ⚠️ Resembles: {issue.historicalMatch}
                           {issue.historicalMatchSummary
                             ? ` — ${issue.historicalMatchSummary}`
@@ -375,10 +609,32 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="pb-2 pt-4 text-center text-xs text-slate-500 sm:text-sm">
+        <section className="mt-20">
+          <div className="glass-strong relative overflow-hidden rounded-[2rem] px-6 py-10 text-center sm:px-10">
+            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-fuchsia-500/20 blur-3xl" />
+            <p className="text-[11px] uppercase tracking-[0.35em] text-violet-200/60">
+              Ready when you are
+            </p>
+            <h2 className="font-display mt-3 text-3xl font-bold sm:text-4xl">
+              Turn contract risk into clear next steps.
+            </h2>
+            <p className="mx-auto mt-3 max-w-lg text-sm text-white/50">
+              Drop an address above and let Sentinel paint the picture — score,
+              summary, and findings in one polished pass.
+            </p>
+            <a
+              href="#scan"
+              className="btn-glow mt-6 inline-flex rounded-full px-6 py-3 text-sm font-semibold transition"
+            >
+              Back to scanner
+            </a>
+          </div>
+        </section>
+
+        <footer className="mt-16 border-t border-white/10 pt-8 text-center text-xs text-white/35 sm:text-sm">
           Powered by Google Gemini · Built for ETHGlobal
         </footer>
       </div>
-    </main>
+    </div>
   );
 }
