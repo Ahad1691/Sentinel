@@ -1,8 +1,8 @@
 # Sentinel
 
-AI-powered smart contract security scanner with a premium dark glassmorphic UI.
-Paste an Ethereum contract address, fetch its verified Solidity source from
-Etherscan, and get a plain-English security report powered by Google Gemini.
+AI-powered smart contract security scanner. Paste an Ethereum contract address,
+fetch its verified Solidity source from Etherscan, and get a plain-English
+security report powered by Google Gemini.
 
 ## Tech stack
 

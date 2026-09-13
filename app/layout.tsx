@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { Outfit, Syne } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
 });
 
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["600", "700", "800"],
-  display: "swap",
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${syne.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         {children}
       </body>
     </html>
