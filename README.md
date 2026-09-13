@@ -9,8 +9,8 @@ security report powered by Google Gemini.
 - **Next.js 14** (App Router) + TypeScript
 - **Tailwind CSS**
 - **Stateless** — no database; scans are not stored
-- **Etherscan API** — verified contract source
-- **Google Gemini** (`gemini-2.5-flash`) — security analysis
+- **Etherscan API V2** — verified contract source on Ethereum mainnet
+- **Google Gemini** (`gemini-3.6-flash`) — security analysis (free Flash tier)
 
 ## Prerequisites
 
