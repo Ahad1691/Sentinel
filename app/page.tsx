@@ -323,7 +323,7 @@ export default function Home() {
             </div>
             <div className="animate-float relative z-10 w-[88%] max-w-md drop-shadow-[0_30px_80px_rgba(168,85,247,0.45)]">
               <Image
-                src="/hero.png"
+                src="/hero.webp"
                 alt="Iridescent Sentinel form"
                 width={800}
                 height={800}
@@ -469,7 +469,7 @@ export default function Home() {
             </div>
             <div className="animate-float absolute bottom-0 left-0 w-[78%]">
               <Image
-                src="/about.png"
+                src="/about.webp"
                 alt=""
                 width={600}
                 height={600}
