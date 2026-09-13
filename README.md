@@ -47,6 +47,25 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Vercel (production)
+
+The live app at [tryoutsentinelio.vercel.app](https://tryoutsentinelio.vercel.app)
+needs the same two keys in the Vercel project **Environment Variables**:
+
+1. Open [Vercel → Project → Settings → Environment Variables](https://vercel.com/ahad1691s-projects/temporary-instant-oboe-qtws5k4/settings/environment-variables)
+2. Add:
+   - `ETHERSCAN_API_KEY` → your Etherscan key (Production + Preview + Development)
+   - `GEMINI_API_KEY` → your Gemini key (Production + Preview + Development)
+3. Redeploy (Deployments → … → Redeploy), or push to `main`
+
+Or from a machine where you are logged into Vercel CLI:
+
+```bash
+export ETHERSCAN_API_KEY=...
+export GEMINI_API_KEY=...
+bash scripts/set-vercel-env.sh
+```
+
 ## Scripts
 
 | Command        | Description              |
